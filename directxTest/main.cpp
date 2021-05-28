@@ -1,5 +1,5 @@
 #include "main.h"
-
+#include "DxException.h"
 #include <Windows.h>
 #include <wrl.h>
 #include <dxgi1_4.h>
@@ -77,5 +77,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 	//窗口创建成功,则显示并更新窗口
 	ShowWindow(mhMainWnd, nShowCmd);
 	UpdateWindow(mhMainWnd);
-	return 0;
+
+	//消息循环
+	//定义消息结构体
+	MSG msg = { 0 };
+	BOOL bRet = 0;
+	//如果GetMessage函数不等于0，说明没有接受到WM_QUIT
+	while (bRet = GetMessage(&msg, 0, 0, 0) != 0) {
+		//如果等于-1，说明GetMessage函数出错了，弹出错误框
+		if (bRet == -1) {
+			MessageBox(0, L"GetMessage Failed", L"Errow", MB_OK);
+		}
+		//如果等于其他值，说明接收到了消息
+		else {
+			TranslateMessage(&msg);	//键盘按键转换，将虚拟键消息转换为字符消息
+			DispatchMessage(&msg);	//把消息分派给相应的窗口过程
+		}
+	}
+	return (int)msg.wParam;
 }
+
+//窗口过程函数
+LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	//消息处理
+	switch (msg) {
+		//当窗口被销毁时，终止消息循环
+	case WM_DESTROY:
+		PostQuitMessage(0);	//终止消息循环，并发出WM_QUIT消息
+		return 0;
+	default:
+		break;
+	}
+	//将上面没有处理的消息转发给默认的窗口过程
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
