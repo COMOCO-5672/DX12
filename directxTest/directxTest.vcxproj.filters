@@ -24,12 +24,18 @@
     <ClInclude Include="CommonFunc.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="dxtool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DxException.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="dxtool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

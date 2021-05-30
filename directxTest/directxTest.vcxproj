@@ -116,6 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,10 +142,12 @@
   <ItemGroup>
     <ClInclude Include="CommonFunc.h" />
     <ClInclude Include="DxException.h" />
+    <ClInclude Include="dxtool.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DxException.cpp" />
+    <ClCompile Include="dxtool.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
