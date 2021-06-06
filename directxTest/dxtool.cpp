@@ -154,8 +154,9 @@ void dxtool::CreateDSV()
 	optClear.DepthStencil.Depth = 1;    // 初始化深度值为1
 	optClear.DepthStencil.Stencil = 0;  // 初始化模板值为0
 
+	auto ptmp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
-	ThrowIfFailed(d3dDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+	ThrowIfFailed(d3dDevice->CreateCommittedResource(&ptmp, //CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 													 D3D12_HEAP_FLAG_NONE, // FLAG
 													 &dsvResourceDesc,      // 上面定义的DSV资源指针
 													 D3D12_RESOURCE_STATE_COMMON,   // 资源的状态为初始状态
@@ -170,10 +171,16 @@ void dxtool::CreateDSV()
 
 void dxtool::Transition()
 {
+	auto tmp = CD3DX12_RESOURCE_BARRIER::Transition(depthStencilBuffer.Get(),
+		D3D12_RESOURCE_STATE_COMMON,	// 转换状态（创建时的状态，即CreateCommittedResource函数中定义的状态）
+		D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
 	cmdList->ResourceBarrier(1,		// 屏障个数
-							 &CD3DX12_RESOURCE_BARRIER::Transition(depthStencilBuffer.Get(),
-																   D3D12_RESOURCE_STATE_COMMON,	// 转换状态（创建时的状态，即CreateCommittedResource函数中定义的状态）
-																   D3D12_RESOURCE_STATE_DEPTH_WRITE)); // 转换后状态为可写入的深度图，还有一个D3D12_RESOURCE_STATE_DEPTH_READ是只可读的深度图
+							 //&CD3DX12_RESOURCE_BARRIER::Transition(depthStencilBuffer.Get(),
+							 //D3D12_RESOURCE_STATE_COMMON,	// 转换状态（创建时的状态，即CreateCommittedResource函数中定义的状态）
+							 //D3D12_RESOURCE_STATE_DEPTH_WRITE)); // 转换后状态为可写入的深度图，还有一个D3D12_RESOURCE_STATE_DEPTH_READ是只可读的深度图
+		&tmp
+		);
 
 	ThrowIfFailed(cmdList->Close());	// 命令添加完后将其关闭
 	ID3D12CommandList* cmdLists[] = { cmdList.Get() };	// 声明并定义命令列表数组
@@ -210,6 +217,31 @@ void dxtool::CreateViewPortAndScissorRect()
 	scissorRect.right = 1280;
 	scissorRect.bottom = 720;
 }
+
+bool dxtool::InitDirect3D()
+{
+#if defined(DEBUG) ||defined(_DEBUG)
+	{
+		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
+		ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+		debugController->EnableDebugLayer();
+	}
+#endif
+
+	CreateDevice();
+	CreateFence();
+	GetDescriptionSize();
+	SetMSAA();
+	CreateCommandObject();
+	CreateSwapChain();
+	CreateDescriptorHeap();
+	CreateRTV();
+	CreateDSV();
+	CreateViewPortAndScissorRect();
+
+	return true;
+}
+
 
 void dxtool::LogAdapters()
 {

@@ -75,6 +75,11 @@ public:
 
     void CreateViewPortAndScissorRect();
 
+    /// <summary>
+    /// 初始化D3D
+    /// </summary>
+    bool InitDirect3D();
+
     void LogAdapters();
 
     void LogAdapterOutPuts(IDXGIAdapter* adapter);
