@@ -58,7 +58,22 @@ public:
     /// </summary>
     void CreateDSV();
 
+    /// <summary>
+    /// 创建RTV句柄
+    /// </summary>
     void CreateRTV();
+
+    /// <summary>
+    /// 转换资源状态
+    /// </summary>
+    void Transition();
+
+    /// <summary>
+    /// 刷新命令队列
+    /// </summary>
+    void FlushCmdQueue();
+
+    void CreateViewPortAndScissorRect();
 
     void LogAdapters();
 
@@ -68,7 +83,12 @@ public:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice;
+    Microsoft::WRL::ComPtr<ID3D12Fence> fence;
     Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cmdList;
+
+    // 创建一个资源和一个堆，并将资源提交至堆中（将深度模板数据提交至GPU显存中）
+    Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilBuffer;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> cmdQueue;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvHeap;
@@ -78,6 +98,8 @@ private:
     UINT rtvDescriptiorSize;
     UINT dsvDescriptionSize;
     UINT cbv_srv_uavDescriptionSize;
+
+    int mCurrentFence = 0;
 };
 
 #endif

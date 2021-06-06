@@ -24,7 +24,6 @@ void dxtool::CreateDevice()
 
 void dxtool::CreateFence()
 {
-	Microsoft::WRL::ComPtr<ID3D12Fence> fence;
 	ThrowIfFailed(d3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
 }
 
@@ -61,7 +60,7 @@ void dxtool::CreateCommandObject()
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdAllocator;
 	// &cmdAllocator等价cmdAllocator.GetAddressof
 	ThrowIfFailed(d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator)));
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cmdList;
+
 	ThrowIfFailed(d3dDevice->CreateCommandList(0,   // 掩码值0，单GPU
 											   D3D12_COMMAND_LIST_TYPE_DIRECT,         // 命令列表类型
 											   cmdAllocator.Get(),                 // 命令分配器接口指针
@@ -155,8 +154,7 @@ void dxtool::CreateDSV()
 	optClear.DepthStencil.Depth = 1;    // 初始化深度值为1
 	optClear.DepthStencil.Stencil = 0;  // 初始化模板值为0
 
-	// 创建一个资源和一个堆，并将资源提交至堆中（将深度模板数据提交至GPU显存中）
-	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilBuffer;
+
 	ThrowIfFailed(d3dDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 													 D3D12_HEAP_FLAG_NONE, // FLAG
 													 &dsvResourceDesc,      // 上面定义的DSV资源指针
@@ -168,6 +166,49 @@ void dxtool::CreateDSV()
 									  nullptr,      // D3D12_DEPTH_STENCIL_VIEW_DESC 类型指针，可填&dsvDesc
 													// 由于在创建深度模板资源时已将定义深度模板数据属性，所有这里可以指定为空指针
 									  dsvHeap->GetCPUDescriptorHandleForHeapStart());   // DSV句柄
+}
+
+void dxtool::Transition()
+{
+	cmdList->ResourceBarrier(1,		// 屏障个数
+							 &CD3DX12_RESOURCE_BARRIER::Transition(depthStencilBuffer.Get(),
+																   D3D12_RESOURCE_STATE_COMMON,	// 转换状态（创建时的状态，即CreateCommittedResource函数中定义的状态）
+																   D3D12_RESOURCE_STATE_DEPTH_WRITE)); // 转换后状态为可写入的深度图，还有一个D3D12_RESOURCE_STATE_DEPTH_READ是只可读的深度图
+
+	ThrowIfFailed(cmdList->Close());	// 命令添加完后将其关闭
+	ID3D12CommandList* cmdLists[] = { cmdList.Get() };	// 声明并定义命令列表数组
+	cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists); // 将命令从命令列表中传至命令队列	
+}
+
+void dxtool::FlushCmdQueue()
+{
+	mCurrentFence++;	// CPU传完命令并关闭后，将当前围栏值+1
+	cmdQueue->Signal(fence.Get(), mCurrentFence);
+	if (fence->GetCompletedValue() < mCurrentFence) {
+		HANDLE eventHandle = CreateEvent(nullptr, false, false, L"FenceSetDone");
+		fence->SetEventOnCompletion(mCurrentFence, eventHandle);
+		WaitForSingleObject(eventHandle, INFINITE);
+
+		CloseHandle(eventHandle);
+	}
+}
+
+void dxtool::CreateViewPortAndScissorRect()
+{
+	D3D12_VIEWPORT viewPort;
+	D3D12_RECT scissorRect;
+
+	viewPort.TopLeftX = 0;
+	viewPort.TopLeftY = 0;
+	viewPort.Width = 1280;
+	viewPort.Height = 720;
+	viewPort.MaxDepth = 1.0f;
+	viewPort.MinDepth = 0.0f;
+
+	scissorRect.left = 0;
+	scissorRect.top = 0;
+	scissorRect.right = 1280;
+	scissorRect.bottom = 720;
 }
 
 void dxtool::LogAdapters()
