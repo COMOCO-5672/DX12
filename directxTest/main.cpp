@@ -409,7 +409,7 @@ bool InitDirect3D()
     CreateDescriptorHeap(); // 创建描述符堆
     CreateRTV();    // 创建渲染目标视图
     CreateDSV();    // 深度/模板视图
-    // CreateViewPortAndScissorRect();
+    //CreateViewPortAndScissorRect();
 
     return true;
 }
@@ -531,8 +531,8 @@ void Draw()
     ID3D12CommandList* commandLists[] = { cmdList.Get() };  // 声明并定义命令列表数组
     cmdQueue->ExecuteCommandLists(_countof(commandLists), commandLists);    // 将命令从命令列表传至命令队列
 
-    ThrowIfFailed(swapChain->Present(0, 0));
-    ref_mCurrentBackBuffer = (ref_mCurrentBackBuffer + 1) % 2;
+    ThrowIfFailed(swapChain->Present(0, 0)); // 交换缓冲器，第一个参数表示是否垂直同步，第二个表示呈现方式
+    mCurrentBackBuffer = (ref_mCurrentBackBuffer + 1) % 2;
 
     FlushCmdQueue();
 }
